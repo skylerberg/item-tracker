@@ -1,0 +1,265 @@
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" ng-href="#/home">Possession Tracker</a>
+    </div>
+
+    <ul class="nav navbar-nav navbar-right">
+      <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Switch User <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li ng-repeat="person in users">
+            <a href="#user/{{ person.id }}">{{ person.name }}</a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<br>
+
+<ul class="nav nav-tabs nav-justified">
+  <li role="presentation" ng-click="setActiveTab('items')" class="{{ activeTab.items }}"><a>Items</a></li>
+  <li role="presentation" ng-click="setActiveTab('places')" class="{{ activeTab.places }}"><a>Places</a></li>
+  <li role="presentation" ng-click="setActiveTab('tags')" class="{{ activeTab.tags }}"><a>Tags</a></li>
+</ul>
+
+
+<script type="text/ng-template" id="displayItem">
+  <td>{{ item.name }}</td>
+  <td>
+    <span ng-repeat="tag in item.tags">
+      <span class="label" style="background-color: {{ tag.color }};">
+        {{ tag.name }}
+      </span>&nbsp;
+    </span>
+  </td>
+  <td>${{ item.price }}.00</td>
+  <td>{{ item.place_name }}</td>
+  <td>
+    <div class="btn-group">
+      <button type="button"
+              class="btn btn-info btn-default dropdown-toggle form-control"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false">
+        Tag <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu", role="menu">
+        <li ng-repeat="tag in tags">
+          <a ng-click="tagItem(item, tag)" style="color: {{ tag.color }}">
+            {{ tag.name }}
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <button type="button" ng-click="getEvents(item)" class="btn btn-info" data-toggle="modal" data-target=".history-{{ item.id }}">History</button>
+
+    <div class="modal fade history-{{ item.id }}" tabindex="-1" role="dialog" aria-labelledby="History">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">History for {{ item.name }}</h4>
+          </div>
+          <div class="modal-body">
+            <div ng-repeat="event in item.events">
+              <div ng-switch on="event.type">
+                <p ng-switch-when="moved">
+                  {{ event.time }} - Moved from {{ event.oldPlace.name }} to {{ event.newPlace.name }}.
+                </p>
+                <p ng-switch-when="priceChanged">
+                  {{ event.time }} - Price changed from ${{ event.oldPrice }}.00 to ${{ event.newPrice}}.00.
+                </p>
+                <p ng-switch-when="nameChanged">
+                  {{ event.time }} - Name changed from {{ event.oldName }} to {{ event.newName }}.
+                </p>
+                <p ng-switch-when="tagged">
+                  {{ event.time }} - 
+                  <span class="label" style="background-color: {{ event.tag.color }};">
+                    {{ event.tag.name }}
+                  </span>&nbsp tag added.
+                </p>
+                <p ng-switch-default>{{ event }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-info" ng-click="item.selected = true">Edit</button>
+    <button class="btn btn-danger" ng-click="delete_item($index)">Delete</button>
+  </td>
+</script>
+
+<script type="text/ng-template" id="editItem">
+  <form>
+    <td><input type="text" class="form-control" ng-model="item.name" placeholder="Name" /></td>
+    <td>
+      <span ng-repeat="tag in item.tags">
+        <span class="label" style="background-color: {{ tag.color }};">
+          {{ tag.name }}
+        </span>&nbsp;
+      </span>
+    </td>
+    <td>
+      <div class="input-group">
+        <span class="input-group-addon">$</span>
+        <input type="text" class="form-control" ng-model="item.price" placeholder="Price" />
+        <span class="input-group-addon">.00</span>
+      </div>
+    </td>
+    <td>
+      <select class="form-control" ng-model="item.place_id">
+        <option ng-repeat="place in places" ng-if="place.id != item.place_id" value="{{ place.id }}">{{ place.name }}</option>
+        <option ng-repeat="place in places" ng-if="place.id == item.place_id" value="{{ place.id }}" selected="selected">{{ place.name }}</option>
+      </select>
+      </select>
+    </td>
+    <td>
+      <button class="btn btn-info" ng-click="putItem(item)">Submit</button>
+      <button class="btn btn-info" ng-click="reset_item(item, $index)">Cancel</button>
+    </td>
+  </form>
+</script>
+
+<script type="text/ng-template" id="itemsTable">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <td>Name</td>
+        <td>Tags</td>
+        <td>Price</td>
+        <td>Place</td>
+        <td>Actions</td>
+      </tr>
+    </thead>
+    <tr ng-repeat="item in items" ng-include="getItemTemplate(item)"></tr>
+    <tr>
+      <form>
+        <td>
+          <input type="text" class="form-control" ng-model="newItem.name" placeholder="Name" />
+        </td>
+        <td></td>
+        <td>
+          <div class="input-group">
+            <span class="input-group-addon">$</span>
+            <input type="text" class="form-control" ng-model="newItem.price" placeholder="Price" />
+            <span class="input-group-addon">.00</span>
+          </div>
+        </td>
+        <td>
+          <select class="form-control" ng-model="newItem.place_id">
+            <option ng-repeat="place in places" value="{{ place.id }}">{{ place.name }}</option>
+          </select>
+        </td>
+        <td>
+          <button class="btn btn-info" ng-click="post_item(newItem)">Submit</button>
+        </td>
+      </form>
+    </tr>
+  </table>
+</script>
+
+
+<script type="text/ng-template" id="displayPlace">
+  <td>{{ place.name }}</td>
+  <td>{{ place.item_count }}</td>
+  <td>${{ place.value }}.00</td>
+  <td>
+    <button class="btn btn-info" ng-click="place.selected = true">Edit</button>
+    <button class="btn btn-danger" ng-click="delete_place($index)">Delete</button>
+  </td>
+</script>
+
+<script type="text/ng-template" id="editPlace">
+  <form>
+    <td><input class="form-control" type="text" ng-model="place.name" placeholder="Name" /></td>
+      <td>{{ place.item_count }}</td>
+      <td>${{ place.value }}.00</td>
+    <td>
+      <button class="btn btn-info" ng-click="put_place(place)">Submit</button>
+      <button class="btn btn-info" ng-click="reset_place(place, $index)">Cancel</button>
+    </td>
+  </form>
+</script>
+
+<script type="text/ng-template" id="placesTable">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <td>Name</td>
+        <td>Total items</td>
+        <td>Value of items</td>
+        <td>Actions</td>
+      </tr>
+    </thead>
+    <tr ng-repeat="place in places" ng-include="getPlaceTemplate(place)"></tr>
+    <tr>
+      <form>
+        <td><input class="form-control" type="text" ng-model="newPlace.name" placeholder="Name" /></td>
+        <td></td>
+        <td></td>
+        <td>
+          <button class="btn btn-info" ng-click="post_place(newPlace)">Submit</button>
+        </td>
+      </form>
+    </tr>
+  </table>
+</script>
+
+
+<script type="text/ng-template" id="displayTag">
+  <td><span class="label" style="background-color: {{ tag.color }};">{{ tag.name }}</span></td>
+  <td style="color: {{ tag.color }};">{{ tag.color }}</td>
+  <td>{{ tag.item_count }}</td>
+  <td>${{ tag.value }}.00</td>
+  <td>
+    <button class="btn btn-info" ng-click="tag.selected = true">Edit</button>
+    <button class="btn btn-danger" ng-click="delete_tag($index)">Delete</button>
+  </td>
+</script>
+
+<script type="text/ng-template" id="editTag">
+  <form>
+    <td><input class="form-control" type="text" ng-model="tag.name" placeholder="Name" /></td>
+    <td><input class="form-control" type="text" ng-model="tag.color" placeholder="E.g. blue" /></td>
+    <td>{{ tag.item_count }}</td>
+    <td>${{ tag.value }}.00</td>
+    <td>
+      <button class="btn btn-info" ng-click="put_tag(tag)">Submit</button>
+      <button class="btn btn-info" ng-click="reset_tag(tag, $index)">Cancel</button>
+    </td>
+  </form>
+</script>
+
+<script type="text/ng-template" id="tagsTable">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <td>Name</td>
+        <td>Color</td>
+        <td>Total items</td>
+        <td>Value of items</td>
+        <td>Actions</td>
+      </tr>
+    </thead>
+    <tr ng-repeat="tag in tags" ng-include="getTagTemplate(tag)"></tr>
+    <tr>
+      <form>
+        <td><input class="form-control" type="text" ng-model="newTag.name" placeholder="Name" /></td>
+        <td><input class="form-control" type="text" ng-model="newTag.color" placeholder="E.g. blue" /></td>
+        <td></td>
+        <td></td>
+        <td>
+          <button class="btn btn-info" ng-click="post_tag(newTag)">Submit</button>
+        </td>
+      </form>
+    </tr>
+  </table>
+</script>
+
+<div ng-include="table"><div>

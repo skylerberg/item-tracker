@@ -1,0 +1,38 @@
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" 
+              class="navbar-toggle collapsed" 
+              data-toggle="collapse" 
+              data-target="#bs-example-navbar-collapse-1" 
+              aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" ng-href="#/home">Possession Tracker</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="jumbotron">
+    <h1>Welcome to Possession Tracker</h1>
+    <p>Select your profile below or create a new one.</p>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-6 col-md-4" ng-repeat="user in users">
+      <a ng-href="#user/{{ user.id }}"class="thumbnail">
+        <img src="images/notfound.jpg" alt="{{ user.name }}" />
+      </a>
+    </div>
+  </div>
+
+  <h2>Create a new user</h2>
+  <form>
+    <input type="text" ng-model="user.name" placeholder="Name" />
+    <button ng-click="put_user(user)">Save</button>
+  </form>
+</div>
